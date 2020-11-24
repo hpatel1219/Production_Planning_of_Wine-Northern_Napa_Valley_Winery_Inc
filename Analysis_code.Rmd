@@ -26,7 +26,8 @@ plot(data)
 *I chose data from October 2000 for two reasons.*
 *1) Grape harvest year starts from October to September.*
 *2) Sales in December is much higher than any other month.* 
-*So, I  considered sales of that month as an outlier and since outlier affects any forecasting model, I removed all other sales and started from Oct 2000  to get an accurate forecast.*
+*So, I  considered sales of that month as an outlier and since outlier affects any forecasting model,*
+*I removed all other sales and started from Oct 2000  to get an accurate forecast.*
 
 
 **linear Regression Model**
@@ -46,7 +47,9 @@ The RMSE for this model is `r rmse`.
 
 ```{r warning=FALSE}
 data.ts <- ts(data$Sales, start = c(2000, 10), frequency = 12, names = "sales")
-autoplot(data.ts, series = "Data") + autolayer(ma(data.ts,4), series = "3 Month MA") + autolayer(ma(data.ts,7), series = "6 Month MA") + autolayer(ma(data.ts, 5), series = "4 Month MA") + xlab("Month") + ylab("Sales")
+autoplot(data.ts, series = "Data") + autolayer(ma(data.ts,4), series = "3 Month MA") +
+        autolayer(ma(data.ts,7), series = "6 Month MA") + autolayer(ma(data.ts, 5), 
+        series = "4 Month MA") + xlab("Month") + ylab("Sales")
 ```
 
 *Moving average with span of 3,4, and 6 months*
