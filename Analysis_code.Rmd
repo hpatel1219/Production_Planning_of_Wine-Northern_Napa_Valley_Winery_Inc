@@ -3,7 +3,6 @@ title: "Production_Planning_of_Wine-Northern_Napa_Valley_Winery_Inc."
 output: github_document
 ---
 
-
 *Importing Packages*
 **Sales Data**
 ```{r message=FALSE, warning=FALSE}
@@ -26,7 +25,9 @@ plot(data)
 
 *I chose data from October 2000 for two reasons.*
 *1) Grape harvest year starts from October to September.*
-*2) Sales in December is much higher than any other month. So, I  considered sales of that month as an outlier and since outlier affects any forecasting model, I removed all other sales and started from Oct 2000  to get an accurate forecast.*
+*2) Sales in December is much higher than any other month.* 
+*So, I  considered sales of that month as an outlier and since outlier affects any forecasting model, I removed all other sales and started from Oct 2000  to get an accurate forecast.*
+
 
 **linear Regression Model**
 
@@ -40,12 +41,14 @@ rmse <- round(sqrt(mean(error^2)), digits = 2)
 
 The RMSE for this model is `r rmse`.
 
-**Moving Average**
+
+**Moving Average Method**
 
 ```{r warning=FALSE}
 data.ts <- ts(data$Sales, start = c(2000, 10), frequency = 12, names = "sales")
 autoplot(data.ts, series = "Data") + autolayer(ma(data.ts,4), series = "3 Month MA") + autolayer(ma(data.ts,7), series = "6 Month MA") + autolayer(ma(data.ts, 5), series = "4 Month MA") + xlab("Month") + ylab("Sales")
 ```
+
 
 *Moving average with span of 3,4, and 6*
 
@@ -93,6 +96,7 @@ MAPE = `r x`
 MAD  = `r x1`
 MSE  = `r x2`
 
+
 **Holt's Exponential Smoothing Method**
 
 ```{r}
@@ -112,6 +116,7 @@ RMSE = `r rmse.h`
 MAPE = `r y`
 MAD  = `r y1`
 MSE  = `r y2`
+
 
 **Holt Winter Exponential Smoothing Method**
 
@@ -135,6 +140,7 @@ MAPE = `r z`
 MAD  = `r z1`
 MSE  = `r z2`
 
+
 **Building model with optimized parameter with ets**
 
 ```{r}
@@ -155,6 +161,7 @@ RMSE = `r rmse.ets`
 MAPE = `r w`
 MAD  = `r w1`
 MSE  = `r w2`
+
 
 ```{r}
 #Data Frame of Chosen Model
