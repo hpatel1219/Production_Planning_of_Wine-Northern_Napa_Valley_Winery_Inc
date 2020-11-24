@@ -1,0 +1,171 @@
+---
+title: "Production_Planning_of_Wine-Northern_Napa_Valley_Winery_Inc."
+output: github_document
+---
+
+
+*Importing Packages*
+**Sales Data**
+```{r message=FALSE, warning=FALSE}
+library(car)
+library(dplyr)
+library(tidyverse)
+library(psych)
+library(caret)
+library(fpp2)
+library(forecast)
+library(DescTools)
+library(lubridate)
+library(knitr)
+library(rmarkdown)
+library(readxl)
+
+data <- read_excel("data.xlsx")
+plot(data)
+```
+
+*I chose data from October 2000 for two reasons.*
+*1) Grape harvest year starts from October to September.*
+*2) Sales in December is much higher than any other month. So, I  considered sales of that month as an outlier and since outlier affects any forecasting model, I removed all other sales and started from Oct 2000  to get an accurate forecast.*
+
+**linear Regression Model**
+
+```{r}
+model1 <- lm(Sales ~ Month, data = data)
+summary(model1)
+sales.lm <- predict(model1)
+error <- data$Sales - sales.lm
+rmse <- round(sqrt(mean(error^2)), digits = 2)
+```
+
+The RMSE for this model is `r rmse`.
+
+**Moving Average**
+
+```{r warning=FALSE}
+data.ts <- ts(data$Sales, start = c(2000, 10), frequency = 12, names = "sales")
+autoplot(data.ts, series = "Data") + autolayer(ma(data.ts,4), series = "3 Month MA") + autolayer(ma(data.ts,7), series = "6 Month MA") + autolayer(ma(data.ts, 5), series = "4 Month MA") + xlab("Month") + ylab("Sales")
+```
+
+*Moving average with span of 3,4, and 6*
+
+```{r message=FALSE, warning=FALSE}
+ma3 <- ma(data.ts, 4)
+sales.ma3 <- forecast(ma3)
+error.ma3 <- data.ts - sales.ma3$fitted
+rsme.ma3 <- round(sqrt(mean(error.ma3^2)), digits = 2)
+
+ma4 <- ma(data.ts, 5)
+sales.ma4 <- forecast(ma4)
+error.ma4 <- data.ts - sales.ma4$fitted
+rsme.ma4 <- round(sqrt(mean(error.ma4^2)), digits = 2)
+
+ma6 <- ma(data.ts, 7)
+sales.ma6 <- forecast(ma6)
+error.ma6 <- data.ts - sales.ma6$fitted
+rsme.ma6 <- round(sqrt(mean(error.ma6^2)), digits = 2)
+```
+
+The RMSE for 3 month ma is `r rsme.ma3`, for 4 month ma is `r rsme.ma4`, and for 6 month ma is `r rsme.ma6`.
+
+```{r warning=FALSE}
+data.ts <- ts(data$Sales, start = c(2000, 10), frequency = 12, names = "sales")
+autoplot(data.ts, main = "Wine Sales", xlab = "Year", ylab = "Sales (Cases of Wine)")
+```
+
+**Simple Exponential Smoothing Method**
+
+```{r}
+ses <- ses(data.ts, alpha = 0.399, h =13)
+error.ses <- data.ts - ses$fitted
+rmse.ses <- round(sqrt(mean(error.ses^2)), digits = 2)
+x <- scales::percent(MAPE(ses$fitted, data.ts), accuracy = 0.01)
+x1 <- MeanAD(ses$fitted)
+x2 <- mean(error.ses^2)
+plot(error.ses, ylab = "Residual")
+summary(ses)
+```
+
+*Measure of Forecast Accuracy of Simple Exponential Smoothing Model*
+AIC  = `r ses$aic`
+RMSE = `r rmse.ses`
+MAPE = `r x`
+MAD  = `r x1`
+MSE  = `r x2`
+
+**Holt's Exponential Smoothing Method**
+
+```{r}
+h <- holt(data.ts, alpha= 0.314, h = 13)
+error.h <- data.ts - h$fitted
+rmse.h <- round(sqrt(mean(error.h^2)), digits = 2)
+y <- scales::percent(MAPE(h$fitted, data.ts), accuracy = 0.01)
+y1 <- MeanAD(h$fitted)
+y2 <- mean(error.h^2)
+plot(error.h, ylab = "Residual")
+summary(h)
+```
+
+*Measure of Forecast Accuracy of Holt's Exponential Smoothing Model*
+AIC  = `r h$aic`
+RMSE = `r rmse.h`
+MAPE = `r y`
+MAD  = `r y1`
+MSE  = `r y2`
+
+**Holt Winter Exponential Smoothing Method**
+
+```{r}
+hw <- ets(data.ts, alpha = 0.282, beta = 0.001, gamma = 0.001)
+sales.hw <- forecast(hw, h=13)
+error.hw <- data.ts - sales.hw$fitted
+rmse.hw <- round(sqrt(mean(error.hw^2)), digits = 2)
+z <- scales::percent(MAPE(sales.hw$fitted, data.ts), accuracy = 0.01)
+z1 <- MeanAD(sales.hw$fitted)
+z2 <- mean(error.hw^2)
+plot(error.hw, ylab = "Residual")
+summary(hw)
+sales.hw$mean
+```
+
+*Measure of Forecast Accuracy of Holt Winter Exponential Smoothing Model*
+AIC  = `r hw$aic`
+RMSE = `r rmse.hw`
+MAPE = `r z`
+MAD  = `r z1`
+MSE  = `r z2`
+
+**Building model with optimized parameter with ets**
+
+```{r}
+ets <- ets(data.ts)
+sales.ets <- forecast(ets, h=13)
+error.ets <- data.ts - sales.ets$fitted
+rmse.ets <- round(sqrt(mean(error.ets^2)), digits = 2)
+w <- scales::percent(MAPE(sales.ets$fitted, data.ts), accuracy = 0.01)
+w1 <- MeanAD(sales.ets$fitted)
+w2 <- mean(error.ets^2)
+plot(error.ets, ylab = "Residual")
+ets
+```
+
+*Measure of Forecast Accuracy of Optimized Exponential Smoothing Model*
+AIC  = `r ets$aic`
+RMSE = `r rmse.ets`
+MAPE = `r w`
+MAD  = `r w1`
+MSE  = `r w2`
+
+```{r}
+#Data Frame of Chosen Model
+hw.dataframe <- data.frame(sales.hw$mean)
+sum(hw.dataframe[2:13, ])
+
+#Question 6 (240000 cases - forecast cases)*price per case ($100)
+sum(hw.dataframe[2:13, ])
+juice.sell <- 240000 - sum(hw.dataframe[2:13, ])
+juice.sell
+
+#Economic Impact ($100) per case.
+juice.sell*100
+```
