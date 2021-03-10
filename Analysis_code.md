@@ -17,7 +17,6 @@ library(knitr)
 library(rmarkdown)
 library(readxl)
 
-
 data <- read_excel("data.xlsx")
 plot(data)
 ```
